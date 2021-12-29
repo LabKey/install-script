@@ -773,10 +773,10 @@ function step_configure_labkey() {
   local ret=0
 
   # configure labkey to run
-  chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "${LABKEY_APP_HOME}"
-  chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "${LABKEY_SRC_HOME}"
-  chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "${LABKEY_INSTALL_HOME}"
-  chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "${TOMCAT_INSTALL_HOME}"
+  chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "${LABKEY_APP_HOME}/"
+  chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "${LABKEY_SRC_HOME}/"
+  chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "${LABKEY_INSTALL_HOME}/"
+  chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "${TOMCAT_INSTALL_HOME}/"
 
   # Configure for embedded
   if [[ $TOMCAT_INSTALL_TYPE == "Embedded" ]]; then
@@ -892,9 +892,9 @@ function step_tomcat_service_standard() {
     tar xzf "apache-tomcat-$TOMCAT_VERSION.tar.gz"
     cp -aR "${LABKEY_APP_HOME}"/src/apache-tomcat-"$TOMCAT_VERSION"/* "$TOMCAT_INSTALL_HOME/"
     chmod 0755 "$TOMCAT_INSTALL_HOME"
-    chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "$TOMCAT_INSTALL_HOME"
-    chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "$TOMCAT_TMP_DIR"
-    chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "$LABKEY_INSTALL_HOME"
+    chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "$TOMCAT_INSTALL_HOME/"
+    chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "$TOMCAT_TMP_DIR/"
+    chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "$LABKEY_INSTALL_HOME/"
     rm "${LABKEY_APP_HOME}/src/apache-tomcat-$TOMCAT_VERSION.tar.gz"
     rm -Rf "${LABKEY_APP_HOME}/src/apache-tomcat-$TOMCAT_VERSION"
     chmod 0700 "${CATALINA_HOME}/conf/Catalina/localhost"
@@ -1256,7 +1256,7 @@ ROOTXMLHERE
     ) >"$TomcatROOTXMLFile"
     chmod 600 "$TomcatROOTXMLFile"
     echo "Tomcat ROOT.xml file created at $TomcatROOTXMLFile"
-    chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "$TOMCAT_INSTALL_HOME"
+    chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "$TOMCAT_INSTALL_HOME/"
     console_msg " Tomcat (Standard) has been installed and configured."
   fi
 
