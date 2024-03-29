@@ -1032,6 +1032,14 @@ function step_tomcat_service_embedded() {
     ) >$NewFile
   fi
 
+  # Set Systemd property AmbientCapabilities=CAP_NET_BIND_SERVICE to allow tomcat to bind to ports <1024
+  if [[ -f "/etc/systemd/system/tomcat_lk.service" && $TOMCAT_USE_PRIVILEGED_PORTS == "TRUE" ]]; then
+    console_msg "Configuring tomcat_lk.service for privileged ports..."
+    if ! grep -iq 'AmbientCapabilities' "/etc/systemd/system/tomcat_lk.service"; then
+      sed -i '/\[Service\]/a AmbientCapabilities=CAP_NET_BIND_SERVICE' /etc/systemd/system/tomcat_lk.service
+    fi
+  fi
+
 }
 # shellcheck disable=SC2120
 function step_tomcat_service_standard() {
