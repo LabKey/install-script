@@ -795,7 +795,7 @@ function step_postgres_configure() {
 
   _ubuntu)
     sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get update
-    # Postgresql 12 included in Ubuntu 20.04 APT repo - otherwise install from Postgresql repos
+    # Postgresql 12 is the default version in Ubuntu 20.04 APT repo - otherwise install from Postgresql repos
     if [ "$POSTGRES_SVR_LOCAL" == "TRUE" ]; then
       if [ "$(platform_version)" == "20.04" ]; then
         if [[ -n $POSTGRES_VERSION && $POSTGRES_VERSION != "12" ]]; then
@@ -807,15 +807,26 @@ function step_postgres_configure() {
           sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install postgresql-12
         fi
       fi
-      # Postgresql 14 included in Ubuntu 22.04 APT repo - otherwise install from Postgresql repos
+      # Postgresql 14 is the default version in Ubuntu 22.04 APT repo - otherwise install from Postgresql repos
       if [ "$(platform_version)" == "22.04" ]; then
         if [[ -n $POSTGRES_VERSION && $POSTGRES_VERSION != "14" ]]; then
-          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          sudo apt install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get update
           sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install "postgresql-$POSTGRES_VERSION"
         else
           sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install postgresql-14
+        fi
+      fi
+      # Postgresql 16 is the default version in Ubuntu 24.04 APT repo - otherwise install from Postgresql repos
+      if [ "$(platform_version)" == "24.04" ]; then
+        if [[ -n $POSTGRES_VERSION && $POSTGRES_VERSION != "16" ]]; then
+          sudo apt install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get update
+          sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install "postgresql-$POSTGRES_VERSION"
+        else
+          sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install postgresql-16
         fi
       fi
 
@@ -829,8 +840,8 @@ function step_postgres_configure() {
     else
       if [ "$(platform_version)" == "20.04" ]; then
         if [[ -n $POSTGRES_VERSION && $POSTGRES_VERSION != "12" ]]; then
-          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          sudo apt install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get update
           sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install "postgresql-client-$POSTGRES_VERSION"
         else
@@ -839,12 +850,22 @@ function step_postgres_configure() {
       fi
       if [ "$(platform_version)" == "22.04" ]; then
         if [[ -n $POSTGRES_VERSION && $POSTGRES_VERSION != "14" ]]; then
-          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          sudo apt install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get update
           sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install "postgresql-client-$POSTGRES_VERSION"
         else
           sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install postgresql-client-14
+        fi
+      fi
+      if [ "$(platform_version)" == "24.04" ]; then
+        if [[ -n $POSTGRES_VERSION && $POSTGRES_VERSION != "16" ]]; then
+          sudo apt install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get update
+          sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install "postgresql-client-$POSTGRES_VERSION"
+        else
+          sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install postgresql-client-16
         fi
       fi
       console_msg "Postgres Client Installed ..."
