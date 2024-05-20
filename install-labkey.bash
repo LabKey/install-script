@@ -401,9 +401,9 @@ function step_os_prereqs() {
     sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get update
     if [[ $TOMCAT_INSTALL_TYPE == "Embedded" ]]; then
       sudo apt-get install -y wget apt-transport-https gpg
-      else
-        sudo apt-get install -y libtcnative-1 libapr1 wget apt-transport-https gpg
-      fi
+    else
+      sudo apt-get install -y libtcnative-1 libapr1 wget apt-transport-https gpg
+    fi
     TOMCAT_LIB_PATH="/usr/lib/x86_64-linux-gnu"
     # Add adoptium repo
     DEB_JDK_REPO="https://packages.adoptium.net/artifactory/deb/"
