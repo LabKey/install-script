@@ -959,7 +959,8 @@ function step_configure_labkey() {
   chown -R "root:root" "${LABKEY_APP_HOME}/"
   chown -R "root:root" "${LABKEY_SRC_HOME}/"
   chown -R "$TOMCAT_USERNAME":"$TOMCAT_USERNAME" "${LABKEY_INSTALL_HOME}/"
-  chown -R "$TOMCAT_USERNAME":"$TOMCAT_USERNAME" "$TOMCAT_TMP_DIR/"
+  chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "${TOMCAT_INSTALL_HOME}/"
+  chown -R "$TOMCAT_USERNAME":"$TOMCAT_USERNAME" "${TOMCAT_TMP_DIR}/"
 
   # Configure for embedded
   if [[ $TOMCAT_INSTALL_TYPE == "Embedded" ]]; then
