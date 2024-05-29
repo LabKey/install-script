@@ -399,7 +399,11 @@ function step_os_prereqs() {
     # ubuntu stuff here
     export DEBIAN_FRONTEND=noninteractive
     sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get update
-    sudo apt-get install -y libtcnative-1 libapr1 wget apt-transport-https gpg
+    if [[ $TOMCAT_INSTALL_TYPE == "Embedded" ]]; then
+      sudo apt-get install -y wget apt-transport-https gpg
+    else
+      sudo apt-get install -y libtcnative-1 libapr1 wget apt-transport-https gpg
+    fi
     TOMCAT_LIB_PATH="/usr/lib/x86_64-linux-gnu"
     # Add adoptium repo
     DEB_JDK_REPO="https://packages.adoptium.net/artifactory/deb/"
@@ -795,7 +799,7 @@ function step_postgres_configure() {
 
   _ubuntu)
     sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get update
-    # Postgresql 12 included in Ubuntu 20.04 APT repo - otherwise install from Postgresql repos
+    # Postgresql 12 is the default version in Ubuntu 20.04 APT repo - otherwise install from Postgresql repos
     if [ "$POSTGRES_SVR_LOCAL" == "TRUE" ]; then
       if [ "$(platform_version)" == "20.04" ]; then
         if [[ -n $POSTGRES_VERSION && $POSTGRES_VERSION != "12" ]]; then
@@ -807,15 +811,26 @@ function step_postgres_configure() {
           sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install postgresql-12
         fi
       fi
-      # Postgresql 14 included in Ubuntu 22.04 APT repo - otherwise install from Postgresql repos
+      # Postgresql 14 is the default version in Ubuntu 22.04 APT repo - otherwise install from Postgresql repos
       if [ "$(platform_version)" == "22.04" ]; then
         if [[ -n $POSTGRES_VERSION && $POSTGRES_VERSION != "14" ]]; then
-          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          sudo apt install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get update
           sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install "postgresql-$POSTGRES_VERSION"
         else
           sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install postgresql-14
+        fi
+      fi
+      # Postgresql 16 is the default version in Ubuntu 24.04 APT repo - otherwise install from Postgresql repos
+      if [ "$(platform_version)" == "24.04" ]; then
+        if [[ -n $POSTGRES_VERSION && $POSTGRES_VERSION != "16" ]]; then
+          sudo apt install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get update
+          sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install "postgresql-$POSTGRES_VERSION"
+        else
+          sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install postgresql-16
         fi
       fi
 
@@ -829,8 +844,8 @@ function step_postgres_configure() {
     else
       if [ "$(platform_version)" == "20.04" ]; then
         if [[ -n $POSTGRES_VERSION && $POSTGRES_VERSION != "12" ]]; then
-          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          sudo apt install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get update
           sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install "postgresql-client-$POSTGRES_VERSION"
         else
@@ -839,12 +854,22 @@ function step_postgres_configure() {
       fi
       if [ "$(platform_version)" == "22.04" ]; then
         if [[ -n $POSTGRES_VERSION && $POSTGRES_VERSION != "14" ]]; then
-          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          sudo apt install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get update
           sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install "postgresql-client-$POSTGRES_VERSION"
         else
           sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install postgresql-client-14
+        fi
+      fi
+      if [ "$(platform_version)" == "24.04" ]; then
+        if [[ -n $POSTGRES_VERSION && $POSTGRES_VERSION != "16" ]]; then
+          sudo apt install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get update
+          sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install "postgresql-client-$POSTGRES_VERSION"
+        else
+          sudo DEBIAN_PRIORITY=critical DEBIAN_FRONTEND=noninteractive apt-get -y install postgresql-client-16
         fi
       fi
       console_msg "Postgres Client Installed ..."
@@ -894,7 +919,7 @@ function step_tomcat_user() {
 function step_tomcat_cert() {
   if _skip_step "${FUNCNAME[0]/step_/}"; then return 0; fi
 
-  chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "$TOMCAT_INSTALL_HOME/SSL"
+  chown -R "$TOMCAT_USERNAME":"$TOMCAT_USERNAME" "$TOMCAT_INSTALL_HOME/SSL"
 
   # generate self-signed cert
   if [ ! -f "${TOMCAT_KEYSTORE_BASE_PATH}/${TOMCAT_KEYSTORE_FILENAME}" ]; then
@@ -918,7 +943,7 @@ function step_tomcat_cert() {
       -keystore "${TOMCAT_KEYSTORE_BASE_PATH}/${TOMCAT_KEYSTORE_FILENAME}" \
       -storepass "$TOMCAT_KEYSTORE_PASSWORD"
 
-    chown "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "${TOMCAT_KEYSTORE_BASE_PATH}/${TOMCAT_KEYSTORE_FILENAME}"
+    chown "$TOMCAT_USERNAME":"$TOMCAT_USERNAME" "${TOMCAT_KEYSTORE_BASE_PATH}/${TOMCAT_KEYSTORE_FILENAME}"
     chmod 440 "${TOMCAT_KEYSTORE_BASE_PATH}/${TOMCAT_KEYSTORE_FILENAME}"
 
     console_msg "A Self signed SSL certificate has been created and stored in the keystoreFile at ${TOMCAT_KEYSTORE_BASE_PATH}/${TOMCAT_KEYSTORE_FILENAME}"
@@ -931,16 +956,17 @@ function step_configure_labkey() {
   local ret=0
 
   # configure labkey to run
-  chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "${LABKEY_APP_HOME}/"
-  chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "${LABKEY_SRC_HOME}/"
-  chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "${LABKEY_INSTALL_HOME}/"
-  chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "${TOMCAT_INSTALL_HOME}/"
+  chown -R "root:root" "${LABKEY_APP_HOME}/"
+  chown -R "root:root" "${LABKEY_SRC_HOME}/"
+  chown -R "$TOMCAT_USERNAME":"$TOMCAT_USERNAME" "${LABKEY_INSTALL_HOME}/"
+  chown -R "$TOMCAT_USERNAME":"$TOMCAT_USERNAME" "${TOMCAT_INSTALL_HOME}/"
+  chown -R "$TOMCAT_USERNAME":"$TOMCAT_USERNAME" "${TOMCAT_TMP_DIR}/"
 
   # Configure for embedded
   if [[ $TOMCAT_INSTALL_TYPE == "Embedded" ]]; then
 
     # TODO not sure if this is needed
-    chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "/work/Tomcat/"
+    chown -R "$TOMCAT_USERNAME":"$TOMCAT_USERNAME" "/work/Tomcat/"
 
     # strip -embedded from filename to get expected directory name
 
@@ -1062,9 +1088,9 @@ function step_tomcat_service_standard() {
     tar xzf "apache-tomcat-$TOMCAT_VERSION.tar.gz"
     cp -aR "${LABKEY_APP_HOME}"/src/apache-tomcat-"$TOMCAT_VERSION"/* "$TOMCAT_INSTALL_HOME/"
     chmod 0755 "$TOMCAT_INSTALL_HOME"
-    chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "$TOMCAT_INSTALL_HOME/"
-    chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "$TOMCAT_TMP_DIR/"
-    chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "$LABKEY_INSTALL_HOME/"
+    chown -R "$TOMCAT_USERNAME":"$TOMCAT_USERNAME" "$TOMCAT_INSTALL_HOME/"
+    chown -R "$TOMCAT_USERNAME":"$TOMCAT_USERNAME" "$TOMCAT_TMP_DIR/"
+    chown -R "$TOMCAT_USERNAME":"$TOMCAT_USERNAME" "$LABKEY_INSTALL_HOME/"
     rm "${LABKEY_APP_HOME}/src/apache-tomcat-$TOMCAT_VERSION.tar.gz"
     rm -Rf "${LABKEY_APP_HOME}/src/apache-tomcat-$TOMCAT_VERSION"
     chmod 0700 "${CATALINA_HOME}/conf/Catalina/localhost"
@@ -1091,7 +1117,7 @@ function step_tomcat_service_standard() {
         rm -Rf "$TOMCAT_INSTALL_HOME/webapps/ROOT/"
         mkdir -p "$TOMCAT_INSTALL_HOME/webapps/ROOT/"
         echo "<% response.sendRedirect(\"/$TOMCAT_CONTEXT_PATH\"); %>" >"$TOMCAT_INSTALL_HOME/webapps/ROOT/index.jsp"
-        chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "$TOMCAT_INSTALL_HOME/webapps/ROOT/"
+        chown -R "$TOMCAT_USERNAME":"$TOMCAT_USERNAME" "$TOMCAT_INSTALL_HOME/webapps/ROOT/"
       fi
     fi
 
@@ -1453,7 +1479,7 @@ ROOTXMLHERE
     ) >"$TomcatROOTXMLFile"
     chmod 600 "$TomcatROOTXMLFile"
     echo "Tomcat ROOT.xml file created at $TomcatROOTXMLFile"
-    chown -R "$TOMCAT_USERNAME"."$TOMCAT_USERNAME" "$TOMCAT_INSTALL_HOME/"
+    chown -R "$TOMCAT_USERNAME":"$TOMCAT_USERNAME" "$TOMCAT_INSTALL_HOME/"
     console_msg " Tomcat (Standard) has been installed and configured."
   fi
 
@@ -1467,13 +1493,13 @@ function step_alt_files_link() {
   # Alt files volume must be mounted and formatted
   if [ -f "${ALT_FILE_ROOT_HEAD}/${COOKIE_ALT_FILE_ROOT_HEAD}" ]; then
     create_req_dir "${ALT_FILE_ROOT_HEAD}/files"
-    chown -R "${TOMCAT_USERNAME}.${TOMCAT_USERNAME}" "${ALT_FILE_ROOT_HEAD}/files/"
+    chown -R "${TOMCAT_USERNAME}:${TOMCAT_USERNAME}" "${ALT_FILE_ROOT_HEAD}/files/"
     ln -s "${ALT_FILE_ROOT_HEAD}/files" "$LABKEY_INSTALL_HOME/files"
   else
     # create default files root
     if [ ! -d "$LABKEY_INSTALL_HOME/files" ]; then
       create_req_dir "$LABKEY_INSTALL_HOME/files"
-      chown -R "${TOMCAT_USERNAME}.${TOMCAT_USERNAME}" "$LABKEY_INSTALL_HOME/files/"
+      chown -R "${TOMCAT_USERNAME}:${TOMCAT_USERNAME}" "$LABKEY_INSTALL_HOME/files/"
     fi
   fi
 }
