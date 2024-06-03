@@ -968,9 +968,8 @@ function step_configure_labkey() {
     # TODO not sure if this is needed
     chown -R "$TOMCAT_USERNAME":"$TOMCAT_USERNAME" "/work/Tomcat/"
 
-    # strip -embedded from filename to get expected directory name
-
-    if [ -d "${LABKEY_APP_HOME}/src/labkey/${LABKEY_DIST_DIR}" ]; then
+    # skip copy labkeyServer.jar if its already in ${LABKEY_INSTALL_HOME}
+    if [[ -d "${LABKEY_APP_HOME}/src/labkey/${LABKEY_DIST_DIR}" ]] && [[ ! -f "${LABKEY_INSTALL_HOME}/labkeyServer.jar" ]]; then
       # copy jar file to LABKEY_INSTALL_HOME for tomcat_lk.service
       if [ -f "${LABKEY_SRC_HOME}/${LABKEY_DIST_DIR}/labkeyServer-${LABKEY_VERSION}.jar" ]; then
         cp -a "${LABKEY_SRC_HOME}/${LABKEY_DIST_DIR}/labkeyServer-${LABKEY_VERSION}.jar" "${LABKEY_INSTALL_HOME}/labkeyServer.jar"
