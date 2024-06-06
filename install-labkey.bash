@@ -243,7 +243,7 @@ function step_default_envs() {
   SMTP_HOST="${SMTP_HOST:-localhost}"
   SMTP_USER="${SMTP_USER:-}"
   SMTP_PORT="${SMTP_PORT:-}"
-  SMTP_PASSWORD="${SMTP_PORT:-}"
+  SMTP_PASSWORD="${SMTP_PASSWORD:-}"
   SMTP_AUTH="${SMTP_AUTH:-}"
   SMTP_FROM="${SMTP_FROM:-}"
   SMTP_STARTTLS="${SMTP_STARTTLS:-TRUE}"
@@ -1463,8 +1463,11 @@ SERVERXMLHERE
     <Resource name="mail/Session" auth="Container"
         type="javax.mail.Session"
         mail.smtp.host="$SMTP_HOST"
-        mail.smtp.user="anonymous"
-        mail.smtp.port="25"/>
+        mail.smtp.user="$SMTP_HOST"
+        mail.smtp.password="$SMTP_USER"
+        mail.smtp.starttls.enable="$SMTP_STARTTLS"
+        mail.smtp.auth="$SMTP_AUTH"
+        mail.smtp.port="$SMTP_PORT"/>
 
     <Loader loaderClass="org.labkey.bootstrap.LabkeyServerBootstrapClassLoader" />
 
