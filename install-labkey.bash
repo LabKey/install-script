@@ -637,8 +637,8 @@ function step_create_app_properties() {
 
 			APP_PROPS_HERE
     ) >"$NewFile"
-      chown root:root "$NewFile"
-      chmod 0600 "$NewFile"
+    chown root:root "$NewFile"
+    chmod 0600 "$NewFile"
   fi
 }
 
