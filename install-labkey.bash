@@ -516,7 +516,7 @@ function step_create_app_properties() {
 						#context.oldEncryptionKey=
 						#context.requiredModules=
 						#context.pipelineConfig=/path/to/pipeline/config/dir
-						context.serverGUID=${LABKEY_GUID}
+						#context.serverGUID=
 						#context.bypass2FA=true
 						#context.workDirLocation=/path/to/desired/workDir
 
