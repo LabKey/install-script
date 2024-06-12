@@ -243,7 +243,7 @@ function step_default_envs() {
   SMTP_HOST="${SMTP_HOST:-localhost}"
   SMTP_USER="${SMTP_USER:-}"
   SMTP_PORT="${SMTP_PORT:-}"
-  SMTP_PASSWORD="${SMTP_PORT:-}"
+  SMTP_PASSWORD="${SMTP_PASSWORD:-}"
   SMTP_AUTH="${SMTP_AUTH:-}"
   SMTP_FROM="${SMTP_FROM:-}"
   SMTP_STARTTLS="${SMTP_STARTTLS:-TRUE}"
@@ -516,7 +516,7 @@ function step_create_app_properties() {
 						#context.oldEncryptionKey=
 						#context.requiredModules=
 						#context.pipelineConfig=/path/to/pipeline/config/dir
-						context.serverGUID=${LABKEY_GUID}
+						#context.serverGUID=
 						#context.bypass2FA=true
 						#context.workDirLocation=/path/to/desired/workDir
 
@@ -637,6 +637,8 @@ function step_create_app_properties() {
 
 			APP_PROPS_HERE
     ) >"$NewFile"
+    chown root:root "$NewFile"
+    chmod 0600 "$NewFile"
   fi
 }
 
@@ -986,8 +988,12 @@ function step_configure_labkey() {
         cp -a "${LABKEY_APP_HOME}/src/labkey/${LABKEY_DIST_DIR}/bin/" "${LABKEY_INSTALL_HOME}/bin/"
       fi
     else
-      console_msg "ERROR: Something is wrong. Unable to configure LabKey, please verify paths to LabKey Jar or LabKey VERSION and DISTRIBUTION Vars."
-      console_msg "Trying to find ${LABKEY_SRC_HOME}/${LABKEY_DIST_DIR}/labkeyServer-${LABKEY_VERSION}.jar"
+      if [ ! -f "${LABKEY_INSTALL_HOME}/labkeyServer.jar" ]; then
+        console_msg "ERROR: Something is wrong. Unable to configure LabKey, please verify paths to LabKey Jar or LabKey VERSION and DISTRIBUTION Vars."
+      fi
+      if [ -f "${LABKEY_INSTALL_HOME}/labkeyServer.jar" ]; then
+        console_msg "Found existing ${LABKEY_INSTALL_HOME}/labkeyServer.jar proceeding with installation."
+      fi
     fi
   fi
 
@@ -1463,8 +1469,11 @@ SERVERXMLHERE
     <Resource name="mail/Session" auth="Container"
         type="javax.mail.Session"
         mail.smtp.host="$SMTP_HOST"
-        mail.smtp.user="anonymous"
-        mail.smtp.port="25"/>
+        mail.smtp.user="$SMTP_HOST"
+        mail.smtp.password="$SMTP_USER"
+        mail.smtp.starttls.enable="$SMTP_STARTTLS"
+        mail.smtp.auth="$SMTP_AUTH"
+        mail.smtp.port="$SMTP_PORT"/>
 
     <Loader loaderClass="org.labkey.bootstrap.LabkeyServerBootstrapClassLoader" />
 
