@@ -1057,7 +1057,7 @@ function step_tomcat_service_embedded() {
 				WorkingDirectory=${LABKEY_INSTALL_HOME}
 				OOMScoreAdjust=-500
 
-				ExecStart=$JAVA_HOME/bin/java \$JAVA_TIMEZONE \$JAVA_HEAP \$JAVA_MID_JAR_OPS \$LABKEY_JAR_OPS \$JAVA_LOG_JAR_OPS \$JAVA_FLAGS_JAR_OPS -jar ${LABKEY_INSTALL_HOME}/labkeyServer.jar
+				ExecStart=$JAVA_HOME/bin/java \$JAVA_TIMEZONE \$JAVA_PRE_JAR_OPS \$JAVA_HEAP \$JAVA_MID_JAR_OPS \$LABKEY_JAR_OPS \$JAVA_LOG_JAR_OPS \$JAVA_FLAGS_JAR_OPS -jar ${LABKEY_INSTALL_HOME}/labkeyServer.jar
 				ExecStop=/bin/bash -c 'while [ -f "$LOCKFILE" ]; do sleep 3; done'
 				SuccessExitStatus=0 143
 				TimeoutStopSec=10min
