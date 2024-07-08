@@ -1020,12 +1020,14 @@ function step_tomcat_service_embedded() {
   # shellcheck disable=SC2046
   JAVA_HOME="$(dirname $(dirname $(readlink -f /etc/alternatives/java)))"
   JAVA_HEAP="-Xms$JAVA_HEAP_SIZE -Xmx$JAVA_HEAP_SIZE"
-  JAVA_PRE_JAR_OPS="-Duser.timezone=${TOMCAT_TIMEZONE} -Djava.library.path=${TOMCAT_LIB_PATH} -Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom"
+  JAVA_PRE_JAR_OPS="-Djava.library.path=${TOMCAT_LIB_PATH} -Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom"
   JAVA_MID_JAR_OPS="-XX:+HeapDumpOnOutOfMemoryError -XX:+UseContainerSupport -XX:HeapDumpPath=${TOMCAT_TMP_DIR} -Djava.net.preferIPv4Stack=true"
   LABKEY_JAR_OPS="-Dlabkey.home=${LABKEY_INSTALL_HOME} -Dlabkey.log.home=${LABKEY_INSTALL_HOME}/logs -Dlabkey.externalModulesDir=${LABKEY_INSTALL_HOME}/externalModules -Djava.io.tmpdir=${TOMCAT_TMP_DIR}"
   JAVA_FLAGS_JAR_OPS="-Dorg.apache.catalina.startup.EXIT_ON_INIT_FAILURE=true -DsynchronousStartup=true -DterminateOnStartupFailure=true"
   JAVA_LOG_JAR_OPS="-XX:ErrorFile=${LABKEY_INSTALL_HOME}/logs/error_%p.log -Dlog4j.configurationFile=log4j2.xml"
+  JAVA_TIMEZONE="-Duser.timezone=${TOMCAT_TIMEZONE}"
   XDG_CACHE_HOME="${TOMCAT_TMP_DIR}"
+  LOCKFILE="$LABKEY_INSTALL_HOME/labkeyUpgradeLockFile"
 
   # Add Tomcat service
   if [ ! -f "/etc/systemd/system/tomcat_lk.service" ]; then
@@ -1050,11 +1052,15 @@ function step_tomcat_service_embedded() {
 				Environment="LABKEY_JAR_OPS=${LABKEY_JAR_OPS}"
 				Environment="JAVA_LOG_JAR_OPS=${JAVA_LOG_JAR_OPS}"
 				Environment="JAVA_FLAGS_JAR_OPS=${JAVA_FLAGS_JAR_OPS}"
+				Environment="JAVA_TIMEZONE=${JAVA_TIMEZONE}"
+				Environment="LOCKFILE=${LOCKFILE}"
 				WorkingDirectory=${LABKEY_INSTALL_HOME}
 				OOMScoreAdjust=-500
 
-				ExecStart=$JAVA_HOME/bin/java \$JAVA_PRE_JAR_OPS \$JAVA_HEAP \$JAVA_MID_JAR_OPS \$LABKEY_JAR_OPS \$JAVA_LOG_JAR_OPS \$JAVA_FLAGS_JAR_OPS -jar ${LABKEY_INSTALL_HOME}/labkeyServer.jar
+				ExecStart=$JAVA_HOME/bin/java \$JAVA_TIMEZONE \$JAVA_HEAP \$JAVA_MID_JAR_OPS \$LABKEY_JAR_OPS \$JAVA_LOG_JAR_OPS \$JAVA_FLAGS_JAR_OPS -jar ${LABKEY_INSTALL_HOME}/labkeyServer.jar
+				ExecStop=/bin/bash -c 'while [ -f "$LOCKFILE" ]; do sleep 3; done'
 				SuccessExitStatus=0 143
+				TimeoutStopSec=10min
 				Restart=on-failure
 				RestartSec=15
 
