@@ -658,14 +658,13 @@ function step_startup_properties() {
     NewFile="$LABKEY_STARTUP_DIR/50_basic-startup.properties"
     (
       /bin/cat <<-STARTUP_PROPS_HERE
+				Authentication.DefaultDomain=${LABKEY_DEFAULT_DOMAIN}
 				LookAndFeelSettings.companyName=${LABKEY_COMPANY_NAME}
-				#LookAndFeelSettings.reportAProblemPath=https://www.labkey.org/hosted-support.url
 				LookAndFeelSettings.systemDescription=${LABKEY_SYSTEM_DESCRIPTION}
 				LookAndFeelSettings.systemEmailAddress=${LABKEY_SYSTEM_EMAIL_ADDRESS}
 				LookAndFeelSettings.systemShortName=${LABKEY_SYSTEM_SHORT_NAME}
-				SiteRootSettings.siteRootFile=${LABKEY_FILES_ROOT}
+				SiteSettings.siteFileRoot=${LABKEY_FILES_ROOT}
 				SiteSettings.baseServerURL=${LABKEY_BASE_SERVER_URL}
-				SiteSettings.defaultDomain=${LABKEY_DEFAULT_DOMAIN}
 				SiteSettings.pipelineToolsDirectory=${LABKEY_INSTALL_HOME}
 				SiteSettings.sslPort=${LABKEY_HTTPS_PORT}
 				SiteSettings.sslRequired=true
