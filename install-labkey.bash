@@ -968,6 +968,12 @@ function step_configure_labkey() {
 
     # TODO not sure if this is needed
     chown -R "$TOMCAT_USERNAME":"$TOMCAT_USERNAME" "/work/Tomcat/"
+    # handle DIST_DIR with or without -embedded in DIR name
+    if echo "$LABKEY_DIST_FILENAME" | grep -iq '-embedded.tar.gz'; then
+      LABKEY_DIST_DIR="${LABKEY_DIST_FILENAME::-16}"
+    else
+      LABKEY_DIST_DIR="${LABKEY_DIST_FILENAME::-7}"
+    fi
 
     # skip copy labkeyServer.jar if its already in ${LABKEY_INSTALL_HOME}
     if [[ -d "${LABKEY_APP_HOME}/src/labkey/${LABKEY_DIST_DIR}" ]] && [[ ! -f "${LABKEY_INSTALL_HOME}/labkeyServer.jar" ]]; then
