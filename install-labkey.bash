@@ -980,10 +980,8 @@ function step_configure_labkey() {
       # copy jar file to LABKEY_INSTALL_HOME for tomcat_lk.service
       if [ -f "${LABKEY_SRC_HOME}/${LABKEY_DIST_DIR}/labkeyServer-${LABKEY_VERSION}.jar" ]; then
         cp -a "${LABKEY_SRC_HOME}/${LABKEY_DIST_DIR}/labkeyServer-${LABKEY_VERSION}.jar" "${LABKEY_INSTALL_HOME}/labkeyServer.jar"
-        cp -a "${LABKEY_SRC_HOME}/${LABKEY_DIST_DIR}/VERSION" "${LABKEY_INSTALL_HOME}/VERSION"
       elif [ -f "${LABKEY_SRC_HOME}/${LABKEY_DIST_DIR}/labkeyServer.jar" ]; then
         cp -a "${LABKEY_SRC_HOME}/${LABKEY_DIST_DIR}/labkeyServer.jar" "${LABKEY_INSTALL_HOME}/labkeyServer.jar"
-        cp -a "${LABKEY_SRC_HOME}/${LABKEY_DIST_DIR}/VERSION" "${LABKEY_INSTALL_HOME}/VERSION"
       else
         console_msg "ERROR: Something is wrong. Unable copy ${LABKEY_INSTALL_HOME}/labkeyServer.jar, please verify LabKey Version and distribution."
         export ret=1
@@ -1032,7 +1030,6 @@ function step_tomcat_service_embedded() {
   JAVA_LOG_JAR_OPS="-XX:ErrorFile=${LABKEY_INSTALL_HOME}/logs/error_%p.log -Dlog4j.configurationFile=log4j2.xml"
   JAVA_REFLECTION_JAR_OPS="--add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED"
   JAVA_TIMEZONE="-Duser.timezone=${TOMCAT_TIMEZONE}"
-  XDG_CACHE_HOME="${TOMCAT_TMP_DIR}"
   LOCKFILE="$LABKEY_INSTALL_HOME/labkeyUpgradeLockFile"
 
   # Add Tomcat service
@@ -1050,7 +1047,6 @@ function step_tomcat_service_embedded() {
 				[Service]
 				Type=simple
 				Environment="CATALINA_HOME=${TOMCAT_INSTALL_HOME}"
-				Environment="XDG_CACHE_HOME=${XDG_CACHE_HOME}"
 				Environment="JAVA_HOME=${JAVA_HOME}"
 				Environment="JAVA_PRE_JAR_OPS=${JAVA_PRE_JAR_OPS}"
 				Environment="JAVA_HEAP=${JAVA_HEAP}"
