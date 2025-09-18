@@ -317,11 +317,12 @@ function step_os_prereqs() {
   case "_$(platform)" in
   _amzn)
     # amzn stuff goes here
-    # Add adoptium repo
-    if [ ! -f "/etc/yum.repos.d/adoptium.repo" ]; then
-      NewFile="/etc/yum.repos.d/adoptium.repo"
-      (
-        /bin/cat <<-AMZN_JDK_HERE
+    # For versions of Amazon  Linux prior to 2023 - Add adoptium repo
+    if [ "$(platform_version)" != "2023" ]; then
+      if [ ! -f "/etc/yum.repos.d/adoptium.repo" ]; then
+        NewFile="/etc/yum.repos.d/adoptium.repo"
+        (
+          /bin/cat <<-AMZN_JDK_HERE
 				[Adoptium]
 				name=Adoptium
 				baseurl=https://packages.adoptium.net/artifactory/rpm/amazonlinux/\$releasever/\$basearch
@@ -329,10 +330,28 @@ function step_os_prereqs() {
 				gpgcheck=1
 				gpgkey=https://packages.adoptium.net/artifactory/api/gpg/key/public
 			AMZN_JDK_HERE
-      ) >"$NewFile"
+        ) >"$NewFile"
+      fi
+      sudo yum update -y
+      sudo yum install -y "$ADOPTOPENJDK_VERSION"
+    else
+      # Add adoptium repo for Amazon Linux 2023
+      if [ ! -f "/etc/yum.repos.d/adoptium.repo" ]; then
+        NewFile="/etc/yum.repos.d/adoptium.repo"
+        (
+          /bin/cat <<-AMZN_JDK_HERE
+				[Adoptium]
+				name=Adoptium
+				baseurl=https://packages.adoptium.net/artifactoryfedora/36/\$basearch
+				enabled=1
+				gpgcheck=1
+				gpgkey=https://packages.adoptium.net/artifactory/api/gpg/key/public
+			AMZN_JDK_HERE
+        ) >"$NewFile"
+      fi
+      sudo dnf update -y
+      sudo dnf install -y "$ADOPTOPENJDK_VERSION"
     fi
-    sudo yum update -y
-    sudo yum install -y "$ADOPTOPENJDK_VERSION"
     ;;
 
   _almalinux)
