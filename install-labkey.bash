@@ -354,7 +354,7 @@ function step_os_prereqs() {
       fi
       sudo dnf update -y
       sudo dnf upgrade --security --assumeyes --releasever=latest
-      sudo dnf install -y "$ADOPTOPENJDK_VERSION"
+      sudo dnf install -y "$ADOPTOPENJDK_VERSION" tomcat-native.x86_64 apr fontconfig
     fi
     ;;
 
@@ -702,18 +702,19 @@ function step_postgres_configure() {
 
   case "_$(platform)" in
   _amzn)
-    # Install the Postgresql repository RPM
-    # note this method is required for AMZN linux and supports PG versions 12-15 - v16 not supported by PG repo
-    if [[ -z $POSTGRES_VERSION ]]; then
-      DEFAULT_POSTGRES_VERSION="15"
-    else
-      DEFAULT_POSTGRES_VERSION=$POSTGRES_VERSION
-    fi
+    if [ "$(platform_version)" != "2023" ]; then
+      # Install the Postgresql repository RPM
+      # note this method is required for AMZN linux and supports PG versions 12-15 - v16 not supported by PG repo
+      if [[ -z $POSTGRES_VERSION ]]; then
+        DEFAULT_POSTGRES_VERSION="15"
+      else
+        DEFAULT_POSTGRES_VERSION=$POSTGRES_VERSION
+      fi
 
-    if [ ! -f "/etc/yum.repos.d/pgdg.repo" ]; then
-      NewPGRepoFile="/etc/yum.repos.d/pgdg.repo"
-      (
-        /bin/cat <<-PG_REPO_HERE
+      if [ ! -f "/etc/yum.repos.d/pgdg.repo" ]; then
+        NewPGRepoFile="/etc/yum.repos.d/pgdg.repo"
+        (
+          /bin/cat <<-PG_REPO_HERE
 				[pgdg$DEFAULT_POSTGRES_VERSION]
 				name=PostgreSQL $DEFAULT_POSTGRES_VERSION for RHEL/CentOS 7 - x86_64
 				baseurl=https://download.postgresql.org/pub/repos/yum/$DEFAULT_POSTGRES_VERSION/redhat/rhel-7-x86_64
@@ -721,40 +722,65 @@ function step_postgres_configure() {
 				gpgcheck=0
 
 				PG_REPO_HERE
-      ) >"$NewPGRepoFile"
-    fi
-
-    if [ "$POSTGRES_SVR_LOCAL" == "TRUE" ]; then
-      sudo yum clean metadata
-      sudo yum update -y
-      sudo yum install "postgresql$DEFAULT_POSTGRES_VERSION-server" -y
-      # TODO: These are pre-reqs for Amazon Linux - Move to the pre-reqs function
-      sudo yum install tomcat-native.x86_64 apr fontconfig -y
-
-      if [ ! -f "/var/lib/pgsql/data/$DEFAULT_POSTGRES_VERSION" ]; then
-        # Handle differing paths between Amazon Linux 2 and Amazon Linux 2023
-        if [ -f "/usr/pgsql-$DEFAULT_POSTGRES_VERSION/bin/postgresql-$DEFAULT_POSTGRES_VERSION-setup" ]; then
-          "/usr/pgsql-$DEFAULT_POSTGRES_VERSION/bin/postgresql-$DEFAULT_POSTGRES_VERSION-setup" initdb "postgresql-$DEFAULT_POSTGRES_VERSION"
-        elif [ -f "/usr/bin/postgresql-setup" ]; then
-          "/usr/bin/postgresql-setup" initdb "postgresql-$DEFAULT_POSTGRES_VERSION"
-        else
-          console_msg "Error: Unable to find Postgres Setup! ..."
-        fi
+        ) >"$NewPGRepoFile"
       fi
-      sudo systemctl enable "postgresql-$DEFAULT_POSTGRES_VERSION"
-      sudo systemctl start "postgresql-$DEFAULT_POSTGRES_VERSION"
-      sudo -u postgres psql -c "create user $POSTGRES_USER password '$POSTGRES_PASSWORD';"
-      sudo -u postgres psql -c "create database $POSTGRES_DB with owner $POSTGRES_USER;"
-      sudo -u postgres psql -c "revoke all on database $POSTGRES_DB from public;"
-      sed -i 's/host    all             all             127.0.0.1\/32            ident/host    all             all             127.0.0.1\/32            md5/' "/var/lib/pgsql/$DEFAULT_POSTGRES_VERSION/data/pg_hba.conf"
-      sudo systemctl restart "postgresql-$DEFAULT_POSTGRES_VERSION"
-      console_msg "Postgres Server and Client Installed ..."
+
+      if [ "$POSTGRES_SVR_LOCAL" == "TRUE" ]; then
+        sudo yum clean metadata
+        sudo yum update -y
+        sudo yum install "postgresql$DEFAULT_POSTGRES_VERSION-server" -y
+        # TODO: These are pre-reqs for Amazon Linux - Move to the pre-reqs function
+        sudo yum install tomcat-native.x86_64 apr fontconfig -y
+
+        if [ ! -f "/var/lib/pgsql/data/$DEFAULT_POSTGRES_VERSION" ]; then
+          "/usr/pgsql-$DEFAULT_POSTGRES_VERSION/bin/postgresql-$DEFAULT_POSTGRES_VERSION-setup" initdb "postgresql-$DEFAULT_POSTGRES_VERSION"
+        fi
+        sudo systemctl start "postgresql-$DEFAULT_POSTGRES_VERSION"
+        sudo -u postgres psql -c "create user $POSTGRES_USER password '$POSTGRES_PASSWORD';"
+        sudo -u postgres psql -c "create database $POSTGRES_DB with owner $POSTGRES_USER;"
+        sudo -u postgres psql -c "revoke all on database $POSTGRES_DB from public;"
+        sed -i 's/host    all             all             127.0.0.1\/32            ident/host    all             all             127.0.0.1\/32            md5/' "/var/lib/pgsql/$DEFAULT_POSTGRES_VERSION/data/pg_hba.conf"
+        sudo systemctl restart "postgresql-$DEFAULT_POSTGRES_VERSION"
+        console_msg "Postgres Server and Client Installed ..."
+      else
+        sudo yum clean metadata
+        sudo yum install "postgresql-client-$DEFAULT_POSTGRES_VERSION" -y
+        # TODO: These are pre-reqs for Amazon Linux - Move to the pre-reqs function
+        sudo yum install tomcat-native.x86_64 apr fontconfig -y
+        console_msg "Postgres Client Installed ..."
+      fi
     else
-      sudo yum clean metadata
-      sudo yum install "postgresql-client-$DEFAULT_POSTGRES_VERSION" -y
-      # TODO: These are pre-reqs for Amazon Linux - Move to the pre-reqs function
-      sudo yum install tomcat-native.x86_64 apr fontconfig -y
-      console_msg "Postgres Client Installed ..."
+      if [ "$(platform_version)" == "2023" ]; then
+        # AL 2023 supports installing Postgresql 15, 16, or 16 from its repo - however, only one version can be installed
+        # default to v15 unless another version is supplied
+        if [[ -z $POSTGRES_VERSION ]]; then
+          DEFAULT_POSTGRES_VERSION="15"
+        else
+          DEFAULT_POSTGRES_VERSION=$POSTGRES_VERSION
+        fi
+
+        if [ "$POSTGRES_SVR_LOCAL" == "TRUE" ]; then
+          sudo dnf install "postgresql$DEFAULT_POSTGRES_VERSION-server" -y
+
+          if [ ! -f "/var/lib/pgsql/data/PG_VERSION" ]; then
+            sudo /usr/bin/postgresql-setup initdb
+          fi
+          sudo systemctl enable postgresql
+          sudo systemctl start postgresql
+          sudo -u postgres psql -c "create user $POSTGRES_USER password '$POSTGRES_PASSWORD';"
+          sudo -u postgres psql -c "create database $POSTGRES_DB with owner $POSTGRES_USER;"
+          sudo -u postgres psql -c "revoke all on database $POSTGRES_DB from public;"
+          sed -i 's/host    all             all             127.0.0.1\/32            ident/host    all             all             127.0.0.1\/32            md5/' "/var/lib/pgsql/data/pg_hba.conf"
+          sudo systemctl restart postgresql
+          console_msg "Postgres Server and Client Installed ..."
+        else
+          sudo dnf clean metadata
+          sudo dnf install "postgresql$DEFAULT_POSTGRES_VERSION" -y
+          console_msg "Postgres Client Installed ..."
+        fi
+      else
+        console_msg "Error: Postgresql install on Amazon Linux version $(platform_version) not supported ..."
+      fi
     fi
     ;;
 
