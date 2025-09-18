@@ -335,14 +335,17 @@ function step_os_prereqs() {
       sudo yum update -y
       sudo yum install -y "$ADOPTOPENJDK_VERSION"
     else
-      # Add adoptium repo for Amazon Linux 2023
+      # Add adoptium repo for Amazon Linux 2023 (AL2023 is fedora based)
+      DISTRIBUTION_NAME="fedora"
+      MAJOR_VERSION="42"
+      ARCH="$(uname -m)"
       if [ ! -f "/etc/yum.repos.d/adoptium.repo" ]; then
         NewFile="/etc/yum.repos.d/adoptium.repo"
         (
           /bin/cat <<-AMZN_JDK_HERE
 				[Adoptium]
 				name=Adoptium
-				baseurl=https://packages.adoptium.net/artifactoryfedora/36/\$basearch
+				baseurl=https://packages.adoptium.net/artifactory/rpm/${DISTRIBUTION_NAME}/${MAJOR_VERSION}/${ARCH}
 				enabled=1
 				gpgcheck=1
 				gpgkey=https://packages.adoptium.net/artifactory/api/gpg/key/public
@@ -350,6 +353,7 @@ function step_os_prereqs() {
         ) >"$NewFile"
       fi
       sudo dnf update -y
+      sudo dnf upgrade --security --assumeyes --releasever=latest
       sudo dnf install -y "$ADOPTOPENJDK_VERSION"
     fi
     ;;
@@ -728,7 +732,14 @@ function step_postgres_configure() {
       sudo yum install tomcat-native.x86_64 apr fontconfig -y
 
       if [ ! -f "/var/lib/pgsql/data/$DEFAULT_POSTGRES_VERSION" ]; then
-        "/usr/pgsql-$DEFAULT_POSTGRES_VERSION/bin/postgresql-$DEFAULT_POSTGRES_VERSION-setup" initdb "postgresql-$DEFAULT_POSTGRES_VERSION"
+        # Handle differing paths between Amazon Linux 2 and Amazon Linux 2023
+        if [ -f "/usr/pgsql-$DEFAULT_POSTGRES_VERSION/bin/postgresql-$DEFAULT_POSTGRES_VERSION-setup" ]; then
+          "/usr/pgsql-$DEFAULT_POSTGRES_VERSION/bin/postgresql-$DEFAULT_POSTGRES_VERSION-setup" initdb "postgresql-$DEFAULT_POSTGRES_VERSION"
+        elif [ -f "/usr/bin/postgresql-setup" ]; then
+          "/usr/bin/postgresql-setup" initdb "postgresql-$DEFAULT_POSTGRES_VERSION"
+        else
+          console_msg "Error: Unable to find Postgres Setup! ..."
+        fi
       fi
       sudo systemctl enable "postgresql-$DEFAULT_POSTGRES_VERSION"
       sudo systemctl start "postgresql-$DEFAULT_POSTGRES_VERSION"
