@@ -318,7 +318,7 @@ function step_os_prereqs() {
   _amzn)
     # amzn stuff goes here
     # For versions of Amazon  Linux prior to 2023 - Add adoptium repo
-    if [ "$(platform_version)" != "2023" ]; then
+    if [ "$(platform_version)" == "2" ]; then
       if [ ! -f "/etc/yum.repos.d/adoptium.repo" ]; then
         NewFile="/etc/yum.repos.d/adoptium.repo"
         (
@@ -702,7 +702,8 @@ function step_postgres_configure() {
 
   case "_$(platform)" in
   _amzn)
-    if [ "$(platform_version)" != "2023" ]; then
+    # Amazon Linux 2
+    if [ "$(platform_version)" == "2" ]; then
       # Install the Postgresql repository RPM
       # note this method is required for AMZN linux and supports PG versions 12-15 - v16 not supported by PG repo
       if [[ -z $POSTGRES_VERSION ]]; then
@@ -750,6 +751,7 @@ function step_postgres_configure() {
         console_msg "Postgres Client Installed ..."
       fi
     else
+      # Amazon Linux 2023
       if [ "$(platform_version)" == "2023" ]; then
         # AL 2023 supports installing Postgresql 15, 16, or 16 from its repo - however, only one version can be installed
         # default to v15 unless another version is supplied
