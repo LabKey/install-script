@@ -753,7 +753,7 @@ function step_postgres_configure() {
     else
       # Amazon Linux 2023
       if [ "$(platform_version)" == "2023" ]; then
-        # AL 2023 supports installing Postgresql 15, 16, or 16 from its repo - however, only one version can be installed
+        # AL 2023 supports installing Postgresql 15, 16, or 17 from its repo - however, only one version can be installed
         # default to v15 unless another version is supplied
         if [[ -z $POSTGRES_VERSION ]]; then
           DEFAULT_POSTGRES_VERSION="15"
