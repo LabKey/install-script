@@ -199,10 +199,6 @@ function step_default_envs() {
   TOMCAT_KEYSTORE_FORMAT="${TOMCAT_KEYSTORE_FORMAT:-PKCS12}"
   TOMCAT_SESSION_TIMEOUT="${TOMCAT_SESSION_TIMEOUT:-30}"
 
-  TOMCAT_SSL_CIPHERS="${TOMCAT_SSL_CIPHERS:-HIGH:!ADH:!EXP:!SSLv2:!SSLv3:!MEDIUM:!LOW:!NULL:!aNULL}"
-  TOMCAT_SSL_ENABLED_PROTOCOLS="${TOMCAT_SSL_ENABLED_PROTOCOLS:-TLSv1.3,+TLSv1.2}"
-  TOMCAT_SSL_PROTOCOL="${TOMCAT_SSL_PROTOCOL:-TLS}"
-
   # Used for Standard Tomcat installs only
   TOMCAT_VERSION="${TOMCAT_VERSION:-9.0.65}"
   TOMCAT_URL="http://archive.apache.org/dist/tomcat/tomcat-9/v$TOMCAT_VERSION/bin/apache-tomcat-$TOMCAT_VERSION.tar.gz"
@@ -488,13 +484,10 @@ function step_create_app_properties() {
 						server.port=${LABKEY_HTTPS_PORT}
 
 						server.ssl.enabled=true
-						server.ssl.enabled-protocols=${TOMCAT_SSL_ENABLED_PROTOCOLS}
-						server.ssl.protocol=${TOMCAT_SSL_PROTOCOL}
 						server.ssl.key-alias=${TOMCAT_KEYSTORE_ALIAS}
 						server.ssl.key-store=${TOMCAT_KEYSTORE_BASE_PATH}/${TOMCAT_KEYSTORE_FILENAME}
 						server.ssl.key-store-password=${TOMCAT_KEYSTORE_PASSWORD}
 						server.ssl.key-store-type=${TOMCAT_KEYSTORE_FORMAT}
-						server.ssl.ciphers=${TOMCAT_SSL_CIPHERS}
 
 						# HTTP-only port for servers that need to handle both HTTPS (configure via server.port and server.ssl above) and HTTP
 						#context.httpPort=8080

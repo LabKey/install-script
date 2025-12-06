@@ -109,9 +109,6 @@ The following tables list the available input variables and default values. In t
 | TOMCAT_KEYSTORE_ALIAS        | Alias for TLS cert in keystore                             | tomcat                                                 | yes      |
 | TOMCAT_KEYSTORE_FORMAT       | tomcat Keystore file format                                | PKCS12                                                 | no       |
 | TOMCAT_KEYSTORE_PASSWORD     | Password used for tomcat keystore                          | Randomly generated if none is provided                 | yes      |
-| TOMCAT_SSL_CIPHERS           | Tomcat SSL Ciphers                                         | HIGH:!ADH:!EXP:!SSLv2:!SSLv3:!MEDIUM:!LOW:!NULL:!aNULL | no       |
-| TOMCAT_SSL_ENABLED_PROTOCOLS | Tomcat TLS enabled protocols                               | ${TOMCAT_SSL_ENABLED_PROTOCOLS:-TLSv1.3,+TLSv1.2       | no       |
-| TOMCAT_SSL_PROTOCOL          | Tomcat SSL Protocol                                        | TLS                                                    | no       |
 
 ### Standard tomcat Install Type Inputs
 
