@@ -33,8 +33,10 @@ PRODUCT='LabKey Server'
 #
 function _skip_step() {
   local step_name="$1"
+  local step_upper
+  step_upper=$(echo "$step_name" | tr '[:lower:]' '[:upper:]')
 
-  if ! eval "[ -z \"\${LABKEY_INSTALL_SKIP_${step_name^^}_STEP:-}\" ]"; then
+  if ! eval "[ -z \"\${LABKEY_INSTALL_SKIP_${step_upper}_STEP:-}\" ]"; then
     echo "skipping '${step_name}' step"
   else
     return 1
@@ -142,7 +144,11 @@ function step_default_envs() {
 
   # set default heap min/max to 50% (w/ <= 8G) or 75% of total mem
   DEFAULT_JAVA_HEAP_SIZE="$(
-    total="$(free -m | grep ^Mem | tr -s ' ' | cut -d ' ' -f 2)"
+    if command -v free &>/dev/null; then
+      total="$(free -m | grep ^Mem | tr -s ' ' | cut -d ' ' -f 2)"
+    else
+      total=1024
+    fi
 
     if [ "$total" -ge 8192 ]; then
       heap_modifier='75'
@@ -173,7 +179,7 @@ function step_default_envs() {
   LABKEY_DIST_REGION="${LABKEY_DIST_REGION:-us-west-2}"
   LABKEY_DIST_URL="${LABKEY_DIST_URL:-https://${LABKEY_DIST_BUCKET}.s3.${LABKEY_DIST_REGION}.amazonaws.com/downloads/release/${LABKEY_DISTRIBUTION}/${LABKEY_VERSION}/LabKey${LABKEY_VERSION}-${LABKEY_BUILD}-${LABKEY_DISTRIBUTION}.tar.gz}"
   LABKEY_DIST_FILENAME="${LABKEY_DIST_FILENAME:-LabKey${LABKEY_VERSION}-${LABKEY_BUILD}-${LABKEY_DISTRIBUTION}.tar.gz}"
-  LABKEY_DIST_DIR="${LABKEY_DIST_DIR:-${LABKEY_DIST_FILENAME::-7}}"
+  LABKEY_DIST_DIR="${LABKEY_DIST_DIR:-${LABKEY_DIST_FILENAME%.tar.gz}}"
   LABKEY_HTTPS_PORT="${LABKEY_HTTPS_PORT:-8443}"
   LABKEY_HTTP_PORT="${LABKEY_HTTP_PORT:-8080}"
   LABKEY_LOG_DIR="${LABKEY_LOG_DIR:-${LABKEY_INSTALL_HOME}/logs}"
@@ -205,7 +211,7 @@ function step_default_envs() {
   TOMCAT_USE_PRIVILEGED_PORTS="${TOMCAT_USE_PRIVILEGED_PORTS:-FALSE}"
   TOMCAT_CONTEXT_PATH="${TOMCAT_CONTEXT_PATH:-ROOT}"
   # Used for non-embedded distributions
-  LABKEY_INSTALLER_CMD="$LABKEY_SRC_HOME/${LABKEY_DIST_FILENAME::-7}/manual-upgrade.sh -l $LABKEY_INSTALL_HOME/ -d $LABKEY_SRC_HOME/${LABKEY_DIST_FILENAME::-7} -c $TOMCAT_INSTALL_HOME -u $TOMCAT_USERNAME --noPrompt --tomcat_lk --skip_tomcat"
+  LABKEY_INSTALLER_CMD="$LABKEY_SRC_HOME/${LABKEY_DIST_FILENAME%.tar.gz}/manual-upgrade.sh -l $LABKEY_INSTALL_HOME/ -d $LABKEY_SRC_HOME/${LABKEY_DIST_FILENAME%.tar.gz} -c $TOMCAT_INSTALL_HOME -u $TOMCAT_USERNAME --noPrompt --tomcat_lk --skip_tomcat"
 
   # Generate password if none is provided
   TOMCAT_KEYSTORE_PASSWORD="${TOMCAT_KEYSTORE_PASSWORD:-$(openssl rand -base64 64 | tr -dc _A-Z-a-z-0-9 | fold -w 32 | head -n1)}"
@@ -1021,9 +1027,9 @@ function step_configure_labkey() {
     chown -R "$TOMCAT_USERNAME":"$TOMCAT_USERNAME" "/work/Tomcat/"
     # handle DIST_DIR with or without -embedded in DIR name
     if echo "$LABKEY_DIST_FILENAME" | grep -iq '-embedded.tar.gz'; then
-      LABKEY_DIST_DIR="${LABKEY_DIST_FILENAME::-16}"
+      LABKEY_DIST_DIR="${LABKEY_DIST_FILENAME%-embedded.tar.gz}"
     else
-      LABKEY_DIST_DIR="${LABKEY_DIST_FILENAME::-7}"
+      LABKEY_DIST_DIR="${LABKEY_DIST_FILENAME%.tar.gz}"
     fi
 
     # skip copy labkeyServer.jar if its already in ${LABKEY_INSTALL_HOME}
