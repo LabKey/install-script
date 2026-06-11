@@ -39,8 +39,10 @@ SKIP_MAIN=1 source "${LABKEY_INSTALL_SCRIPT_PATH}"
 #
 function _skip_step() {
   local step_name="$1"
+  local step_upper
+  step_upper=$(echo "$step_name" | tr '[:lower:]' '[:upper:]')
 
-  if ! eval "[ -z \"\${WCP_INSTALL_SKIP_${step_name^^}_STEP:-}\" ]"; then
+  if ! eval "[ -z \"\${WCP_INSTALL_SKIP_${step_upper}_STEP:-}\" ]"; then
     echo "skipping '${step_name}' step"
   else
     return 1

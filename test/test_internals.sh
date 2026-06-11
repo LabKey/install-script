@@ -21,7 +21,8 @@ function test_step_skipping() {
     'Intro not skipped despite provided ENV.' \
     "skipping 'intro' step" \
     "$(
-      export "${TEST_PRODUCT^^}_INSTALL_SKIP_INTRO_STEP=1"
+      prod_upper=$(echo "${TEST_PRODUCT}" | tr '[:lower:]' '[:upper:]')
+      export "${prod_upper}_INSTALL_SKIP_INTRO_STEP=1"
       step_intro
     )"
 }
