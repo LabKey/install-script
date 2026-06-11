@@ -1093,7 +1093,7 @@ function step_tomcat_service_embedded() {
 
 				[Unit]
 				Description=lk Apache Tomcat Application
-				After=syslog.target network.target
+				After=syslog.target network.target remote-fs.target
 
 				[Service]
 				Type=simple
@@ -1224,7 +1224,7 @@ function step_tomcat_service_standard() {
 
 				[Unit]
 				Description=lk Apache Tomcat Application
-				After=syslog.target network.target
+				After=syslog.target network.target remote-fs.target
 
 				[Service]
 				Type=forking
