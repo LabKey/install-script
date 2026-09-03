@@ -1079,7 +1079,7 @@ function step_tomcat_service_embedded() {
   # Env Vars for tomcat_service file
   # shellcheck disable=SC2046
   JAVA_HOME="$(dirname $(dirname $(readlink -f /etc/alternatives/java)))"
-  JAVA_HEAP="-Xms$JAVA_HEAP_SIZE -Xmx$JAVA_HEAP_SIZE"
+  JAVA_HEAP="${JAVA_HEAP:--Xms$JAVA_HEAP_SIZE -Xmx$JAVA_HEAP_SIZE}"
   JAVA_PRE_JAR_OPS="-Djava.library.path=${TOMCAT_LIB_PATH} -Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom"
   JAVA_MID_JAR_OPS="-XX:+HeapDumpOnOutOfMemoryError -XX:+UseContainerSupport -XX:HeapDumpPath=${TOMCAT_TMP_DIR} -Djava.net.preferIPv4Stack=true"
   LABKEY_JAR_OPS="-Dlabkey.home=${LABKEY_INSTALL_HOME} -Dlabkey.log.home=${LABKEY_INSTALL_HOME}/logs -Dlabkey.externalModulesDir=${LABKEY_INSTALL_HOME}/externalModules -Djava.io.tmpdir=${TOMCAT_TMP_DIR}"
