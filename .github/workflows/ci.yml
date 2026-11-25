@@ -12,6 +12,10 @@ on:
 
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   self:
     name: lint actions config
